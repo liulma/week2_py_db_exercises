@@ -2,6 +2,7 @@ import psycopg2
 from config import config
 import argparse
 
+# Make it a command-line program (didn't include all functions)
 def main():
     parser = argparse.ArgumentParser(description="Database Interaction Tool")
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
@@ -377,7 +378,7 @@ def create_table():
     try:
         con = psycopg2.connect(**config())
         cursor = con.cursor()
-        SQL = 'CREATE TABLE friends (id SERIAL PRIMARY KEY, name varchar(255) NOT NULL, age int NOT NULL, bestfriend bool);'
+        SQL = 'CREATE TABLE photos (id SERIAL PRIMARY KEY, name varchar(255) NOT NULL, photo BYTEA NOT NULL);'
         cursor.execute(SQL)
         con.commit() # Save the changes to database
         cursor.close()
@@ -410,6 +411,71 @@ def add_friends(name: str, age: int, bestfriend: bool):
         if con is not None:
             con.close()
 
+def test_photo():
+    con = None
+    try:
+        con = psycopg2.connect(**config())
+        cursor = con.cursor()
+        SQL = 'SELECT * FROM photos;'
+        cursor.execute(SQL)
+        rows = cursor.fetchall()
+        print("Testing if transaction worked:")
+        print(rows)
+        cursor.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if con is not None:
+            con.close()
+
+def insert_image(name: str, filepath: str):
+    con = None
+    try:
+        with open(filepath, 'rb') as image_file:
+            image_data = image_file.read()
+
+        con = psycopg2.connect(**config())
+        cursor = con.cursor()
+        SQL = "INSERT INTO photos (name, photo) VALUES (%s, %s)"
+        data = name, psycopg2.Binary(image_data) # psycopg2.Binary adapts the Python bytes object (your image_data) into a format that PostgreSQL (and psycopg2) understand as binary data
+        cursor.execute(SQL, data)
+        con.commit()
+        print("BLOB data inserted successfully.")
+
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if con is not None:
+            con.close()
+
+def retrieve_image(name: str, filename: str):
+    con = None
+    try:
+        con = psycopg2.connect(**config())
+        cursor = con.cursor()
+        SQL = 'SELECT photo FROM photos WHERE name=%s;'
+        data = name
+        cursor.execute(SQL, (data,))
+        image_data = cursor.fetchone()
+        
+        if image_data is None:
+            print(f"No image found with name: {name}")
+
+        image_bytes = image_data[0] # retrieve binary data from the database
+
+        with open(filename, 'wb') as file:
+            file.write(image_bytes)
+
+        print(f"Image saved succesfully to {filename}")
+        cursor.close()
+
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if con is not None:
+            con.close()
+        
+
 if __name__ == '__main__':
     main()
     #connect()
@@ -425,7 +491,13 @@ if __name__ == '__main__':
     #rmv_person(7)
     #rmv_cert(1)
     #transfer_money(4, 3, 5500)
+    #create_table()
     #add_friends('Senni', 31, True)
     #add_friends('Aleksi', 27, True)
     #add_friends('Sanna', 32, False)
     #add_friends('Tiina', 30, False)
+    #create_table()
+    #test_photo()
+    #insert_image('Sami', 'src\\data\\dog.jpg')
+    #test_photo()
+    #retrieve_image('Sami', 'src\\data\\test.jpg')
