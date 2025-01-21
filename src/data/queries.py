@@ -268,5 +268,5 @@ if __name__ == '__main__':
     #test_cert_function()
     #rmv_person(6)
     #test_person_function()
-    rmv_cert(4)
-    test_cert_function()
+    #rmv_cert(4)
+    #test_cert_function()
