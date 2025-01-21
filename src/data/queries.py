@@ -1,5 +1,64 @@
 import psycopg2
 from config import config
+import argparse
+
+def main():
+    parser = argparse.ArgumentParser(description="Database Interaction Tool")
+    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+
+    # Subparser for each function
+    parser_create_cert = subparsers.add_parser('create_certificate', help='Create a new certificate')
+    parser_create_cert.add_argument('name', type=str, help="Name of certificate")
+    parser_create_cert.add_argument('person_id', type=int, help='Id of person whose certificate it is')
+
+    parser_create_person = subparsers.add_parser('create_person', help='Create a new person')
+    parser_create_person.add_argument('name', type=str, help='Person\'s name')
+    parser_create_person.add_argument('age', type=int, help='Person\'s age')
+    parser_create_person.add_argument('student', type=str.lower, choices=['true', 'false'], help='Is the person a student (true/false)')
+
+    parser_upd_person = subparsers.add_parser('update_person', help="Update persons name")
+    parser_upd_person.add_argument('name', type=str, help="The new name")
+    parser_upd_person.add_argument('id', type=int, help="The id of the person")
+
+    parser_remove_person = subparsers.add_parser('remove_person', help="Remove person from person table")
+    parser_remove_person.add_argument('id', type=int, help="The id of the person")
+
+    parser_remove_cert = subparsers.add_parser('remove_certificate', help="Remove a certificate")
+    parser_remove_cert.add_argument('id', type=int, help="The id of the certificate")
+
+    parser_transfer = subparsers.add_parser('transfer_money', help='Transfer money between accounts')
+    parser_transfer.add_argument('from_acc', type=int, help="From which account is the money being transferred")
+    parser_transfer.add_argument('to_acc', type=int, help="To which account is the money being transferred")
+    parser_transfer.add_argument('amount', type=int, help="How much money is being transferred")
+
+    while True:
+        try:
+            input_str = input("Enter command (or 'exit' to quit): ")
+            
+            if input_str.lower() == 'exit':
+                break
+
+            args = parser.parse_args(input_str.split()) # Parse the input string
+
+            if args.command == 'create_person':
+                student_bool = args.student == 'true' # Check if the value equals to the string 'true', if yes the value will be True, if not, the value will be False
+                db_create_person(args.name, args.age, student_bool)
+            elif args.command == 'create_certificate':
+                db_create_cert(args.name, args.person_id)
+            elif args.command == 'update_person':
+                upd_person(args.name, args.id)
+            elif args.command == 'remove_person':
+                rmv_person(args.id)
+            elif args.command == 'remove_certificate':
+                rmv_cert(args.id)
+            elif args.command == 'transfer_money':
+                transfer_money(args.from_acc, args.to_acc, args.amount)
+            else:
+                parser.print_help() # Print help if no command is provided or if an invalid command is used
+        except argparse.ArgumentError as e:
+            print(f"Invalid command or arguments: {e}")
+        except Exception as e: # Handle other potential errors
+            print(f"An error occurred: {e}")
 
 # Create connect function and test the connection
 def connect():
@@ -352,15 +411,16 @@ def add_friends(name: str, age: int, bestfriend: bool):
             con.close()
 
 if __name__ == '__main__':
-    connect()
-    all_rows()
-    column_names()
-    cert_names_rows()
-    avg_age()
-    person_scrum()
+    main()
+    #connect()
+    #all_rows()
+    #column_names()
+    #cert_names_rows()
+    #avg_age()
+    #person_scrum()
     #db_create_cert('Azure', 10)
     #db_create_person('Tina', 35, False)
-    upd_person('Anne', 9)
+    #upd_person('Anne', 9)
     #upd_cert(8, 3)
     #rmv_person(7)
     #rmv_cert(1)
