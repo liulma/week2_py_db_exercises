@@ -250,6 +250,22 @@ def rmv_cert(id: int):
             con.close() 
 
 # Testing transactions
+def transactions():
+    con = None
+    try:
+        con = psycopg2.connect(**config())
+        cursor = con.cursor()
+        SQL = 'SELECT * FROM accounts;'
+        cursor.execute(SQL)
+        row = cursor.fetchall()
+        print("Testing connection to transactions:")
+        print(row)
+        cursor.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if con is not None:
+            con.close()    
 
 if __name__ == '__main__':
     connect()
@@ -270,3 +286,4 @@ if __name__ == '__main__':
     #test_person_function()
     #rmv_cert(4)
     #test_cert_function()
+    transactions()
